@@ -28,12 +28,11 @@ class Plant(pygame.sprite.Sprite):
         self.shoot_timer = 0
 
     def update(self):
-        # Shoot bullets periodically
         self.shoot_timer += 1
         if self.shoot_timer >= 60:  # Fire every second
-            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0))  # Straight
-            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))  # Diagonal Up
-            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))  # Diagonal Down
+            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0))
+            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))
+            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))
             self.shoot_timer = 0
 
 
@@ -78,6 +77,7 @@ zombies = pygame.sprite.Group()
 running = True
 clock = pygame.time.Clock()
 zombie_spawn_timer = 0
+player_turn = "plant"  # Alternates between "plant" and "zombie"
 
 while running:
     screen.fill((0, 0, 0))
@@ -89,13 +89,13 @@ while running:
             mx, my = pygame.mouse.get_pos()
             grid_x = (mx // GRID_SIZE) * GRID_SIZE
             grid_y = (my // GRID_SIZE) * GRID_SIZE
-            plants.add(Plant(grid_x, grid_y))
 
-    # Spawn zombies
-    zombie_spawn_timer += 1
-    if zombie_spawn_timer >= 120:
-        zombies.add(Zombie(WIDTH - GRID_SIZE, random.randint(0, ROWS - 1) * GRID_SIZE))
-        zombie_spawn_timer = 0
+            if player_turn == "plant":
+                plants.add(Plant(grid_x, grid_y))
+                player_turn = "zombie"
+            elif player_turn == "zombie":
+                zombies.add(Zombie(grid_x, grid_y))
+                player_turn = "plant"
 
     # Update
     plants.update()
