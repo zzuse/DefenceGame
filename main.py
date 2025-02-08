@@ -31,21 +31,26 @@ class Plant(pygame.sprite.Sprite):
         # Shoot bullets periodically
         self.shoot_timer += 1
         if self.shoot_timer >= 60:  # Fire every second
-            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2))
+            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0))  # Straight
+            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))  # Diagonal Up
+            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))  # Diagonal Down
             self.shoot_timer = 0
 
 
 # Bullet class
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, vx, vy):
         super().__init__()
         self.image = pygame.Surface((10, 10))
         self.image.fill(WHITE)
         self.rect = self.image.get_rect(center=(x, y))
+        self.vx = vx
+        self.vy = vy
 
     def update(self):
-        self.rect.x += 5
-        if self.rect.x > WIDTH:
+        self.rect.x += self.vx
+        self.rect.y += self.vy
+        if self.rect.x > WIDTH or self.rect.y < 0 or self.rect.y > HEIGHT:
             self.kill()
 
 
