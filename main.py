@@ -25,15 +25,14 @@ class Plant(pygame.sprite.Sprite):
         self.image = pygame.Surface((GRID_SIZE, GRID_SIZE))
         self.image.fill(GREEN)
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.shoot_timer = 0
+        self.shoot_ready = False  # Shoots only after zombie placement
 
-    def update(self):
-        self.shoot_timer += 1
-        if self.shoot_timer >= 60:  # Fire every second
+    def shoot(self):
+        if self.shoot_ready:
             bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0))
             bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))
             bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))
-            self.shoot_timer = 0
+            self.shoot_ready = False  # Reset shooting ability until next round
 
 
 # Bullet class
@@ -61,8 +60,8 @@ class Zombie(pygame.sprite.Sprite):
         self.image.fill(RED)
         self.rect = self.image.get_rect(topleft=(x, y))
 
-    def update(self):
-        self.rect.x -= 1
+    def move_forward(self):
+        self.rect.x -= GRID_SIZE  # Moves one step forward per round
         if self.rect.x < 0:
             pygame.quit()
             quit()
@@ -76,7 +75,6 @@ zombies = pygame.sprite.Group()
 # Game loop
 running = True
 clock = pygame.time.Clock()
-zombie_spawn_timer = 0
 player_turn = "plant"  # Alternates between "plant" and "zombie"
 
 while running:
@@ -97,8 +95,19 @@ while running:
                 zombies.add(Zombie(grid_x, grid_y))
                 player_turn = "plant"
 
+                # Allow plants to shoot after zombie placement
+                for plant in plants:
+                    plant.shoot_ready = True
+
+                # Move zombies forward one step
+                for zombie in zombies:
+                    zombie.move_forward()
+
+    # Let plants shoot only once per round
+    for plant in plants:
+        plant.shoot()
+
     # Update
-    plants.update()
     bullets.update()
     zombies.update()
 
