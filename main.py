@@ -26,6 +26,7 @@ class Plant(pygame.sprite.Sprite):
         self.image.fill(GREEN)
         self.rect = self.image.get_rect(topleft=(x, y))
         self.shoot_ready = False  # Shoots only after zombie placement
+        self.health = 10  # Each plant has 10 health
 
     def shoot(self):
         if self.shoot_ready:
@@ -59,6 +60,7 @@ class Zombie(pygame.sprite.Sprite):
         self.image = pygame.Surface((GRID_SIZE, GRID_SIZE))
         self.image.fill(RED)
         self.rect = self.image.get_rect(topleft=(x, y))
+        self.health = 10  # Each zombie has 10 health
 
     def move_forward(self):
         self.rect.x -= GRID_SIZE  # Moves one step forward per round
@@ -113,9 +115,12 @@ while running:
 
     # Collision detection
     for bullet in bullets:
-        hit_zombies = pygame.sprite.spritecollide(bullet, zombies, True)
-        if hit_zombies:
+        hit_zombies = pygame.sprite.spritecollide(bullet, zombies, False)
+        for zombie in hit_zombies:
+            zombie.health -= 1
             bullet.kill()
+            if zombie.health <= 0:
+                zombie.kill()
 
     # Draw everything
     plants.draw(screen)
