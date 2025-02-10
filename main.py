@@ -16,6 +16,7 @@ pygame.display.set_caption("Plants vs Zombies Clone")
 WHITE = (255, 255, 255)
 GREEN = (0, 200, 0)
 RED = (200, 0, 0)
+FONT = pygame.font.Font(None, 24)
 
 
 # Plant class
@@ -36,6 +37,10 @@ class Plant(pygame.sprite.Sprite):
                 bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))
                 bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))
             self.shoot_ready = False  # Reset shooting ability until next round
+
+    def draw_health(self, surface):
+        health_text = FONT.render(str(self.health), True, WHITE)
+        surface.blit(health_text, (self.rect.right - 20, self.rect.top))
 
 
 # Bullet class
@@ -69,6 +74,10 @@ class Zombie(pygame.sprite.Sprite):
         if self.rect.x < 0:
             pygame.quit()
             quit()
+
+    def draw_health(self, surface):
+        health_text = FONT.render(str(self.health), True, WHITE)
+        surface.blit(health_text, (self.rect.right - 20, self.rect.top))
 
 
 # Groups
@@ -128,6 +137,12 @@ while running:
     plants.draw(screen)
     bullets.draw(screen)
     zombies.draw(screen)
+
+    # Draw health bars
+    for plant in plants:
+        plant.draw_health(screen)
+    for zombie in zombies:
+        zombie.draw_health(screen)
 
     pygame.display.flip()
     clock.tick(60)
