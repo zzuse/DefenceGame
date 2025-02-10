@@ -27,12 +27,14 @@ class Plant(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.shoot_ready = False  # Shoots only after zombie placement
         self.health = 10  # Each plant has 10 health
+        self.fire_rounds = 3  # Number of fire rounds per turn
 
     def shoot(self):
         if self.shoot_ready:
-            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0))
-            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))
-            bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))
+            for _ in range(self.fire_rounds):
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))
             self.shoot_ready = False  # Reset shooting ability until next round
 
 
