@@ -30,6 +30,9 @@ class Plant(pygame.sprite.Sprite):
         self.health = 10  # Each plant has 10 health
         self.fire_rounds = 3  # Number of fire rounds per turn
 
+    def move(self, x, y):
+        self.rect.topleft = (x, y)
+
     def shoot(self):
         if self.shoot_ready:
             for _ in range(self.fire_rounds):
@@ -81,9 +84,9 @@ class Zombie(pygame.sprite.Sprite):
 
 
 # Groups
-plants = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
 zombies = pygame.sprite.Group()
+plant = Plant(GRID_SIZE, GRID_SIZE)  # One plant instance
 
 # Game loop
 running = True
@@ -102,23 +105,21 @@ while running:
             grid_y = (my // GRID_SIZE) * GRID_SIZE
 
             if player_turn == "plant":
-                plants.add(Plant(grid_x, grid_y))
+                plant.move(grid_x, grid_y)  # Move the plant
                 player_turn = "zombie"
             elif player_turn == "zombie":
                 zombies.add(Zombie(grid_x, grid_y))
                 player_turn = "plant"
 
-                # Allow plants to shoot after zombie placement
-                for plant in plants:
-                    plant.shoot_ready = True
+                # Allow plant to shoot after zombie placement
+                plant.shoot_ready = True
 
                 # Move zombies forward one step
                 for zombie in zombies:
                     zombie.move_forward()
 
-    # Let plants shoot only once per round
-    for plant in plants:
-        plant.shoot()
+    # Let plant shoot only once per round
+    plant.shoot()
 
     # Update
     bullets.update()
@@ -134,13 +135,12 @@ while running:
                 zombie.kill()
 
     # Draw everything
-    plants.draw(screen)
+    screen.blit(plant.image, plant.rect)
     bullets.draw(screen)
     zombies.draw(screen)
 
     # Draw health bars
-    for plant in plants:
-        plant.draw_health(screen)
+    plant.draw_health(screen)
     for zombie in zombies:
         zombie.draw_health(screen)
 
