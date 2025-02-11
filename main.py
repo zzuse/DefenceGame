@@ -103,12 +103,22 @@ class Bullet(pygame.sprite.Sprite):
 
 # Zombie class
 class Zombie(pygame.sprite.Sprite):
-    def __init__(self, x, y, health):
+
+    def __init__(self, x, y, health, zombie_type):
         super().__init__()
         self.image = pygame.Surface((GRID_SIZE, GRID_SIZE))
         self.image.fill(RED)
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.health = health  # Each zombie has specified health
+        self.health = health
+        self.zombie_type = zombie_type
+
+    def take_damage(self, damage):
+        global PLANT_MONEY
+        self.health -= damage
+        if self.health <= 0:
+            reward = 10 if self.zombie_type == "Normal" else 5 if self.zombie_type == "Fast" else 20
+            PLANT_MONEY += reward
+            self.kill()
 
     def move(self):
         if self.rect.x > GRID_SIZE:
@@ -172,7 +182,7 @@ while running:
                 grid_y = (my // GRID_SIZE) * GRID_SIZE
                 if selected_zombie != "None":
                     health = 10 if selected_zombie == "Normal" else 5 if selected_zombie == "Fast" else 20
-                    zombies.add(Zombie((COLS - 1) * GRID_SIZE + PLANT_STORE_WIDTH, grid_y, health))
+                    zombies.add(Zombie((COLS - 1) * GRID_SIZE + PLANT_STORE_WIDTH, grid_y, health, selected_zombie))
                 for zombie in zombies:
                     zombie.move()
                     zombie.attack()
@@ -195,7 +205,7 @@ while running:
     for bullet in bullets:
         hit_zombies = pygame.sprite.spritecollide(bullet, zombies, False)
         for zombie in hit_zombies:
-            zombie.health -= bullet.damage
+            zombie.take_damage(bullet.damage)
             bullet.kill()
             if zombie.health <= 0:
                 zombie.kill()
