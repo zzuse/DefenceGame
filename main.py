@@ -29,17 +29,28 @@ class Plant(pygame.sprite.Sprite):
         self.shoot_ready = False  # Shoots only after zombie placement
         self.health = 10  # Each plant has 10 health
         self.fire_rounds = 3  # Number of fire rounds per turn
+        self.shoot_timer = 0
+        self.shots_fired = 0
 
     def move(self, x, y):
         self.rect.topleft = (x, y)
 
-    def shoot(self):
+    def start_shooting(self):
         if self.shoot_ready:
-            for _ in range(self.fire_rounds):
+            self.shoot_timer = pygame.time.get_ticks()
+            self.shots_fired = 0
+
+    def shoot(self):
+        if self.shoot_ready and self.shots_fired < self.fire_rounds:
+            now = pygame.time.get_ticks()
+            if now - self.shoot_timer > 500:  # Delay between shots
+                self.shoot_timer = now
                 bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0))
                 bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))
                 bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))
-            self.shoot_ready = False  # Reset shooting ability until next round
+                self.shots_fired += 1
+                if self.shots_fired >= self.fire_rounds:
+                    self.shoot_ready = False
 
     def draw_health(self, surface):
         health_text = FONT.render(str(self.health), True, WHITE)
@@ -117,12 +128,13 @@ while running:
 
                 # Allow plant to shoot after zombie placement
                 plant.shoot_ready = True
+                plant.start_shooting()
 
                 # Move zombies forward one step
                 for zombie in zombies:
                     zombie.move_forward()
 
-    # Let plant shoot only once per round
+    # Let plant shoot with delays
     plant.shoot()
 
     # Update
