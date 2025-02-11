@@ -45,9 +45,9 @@ class Plant(pygame.sprite.Sprite):
             now = pygame.time.get_ticks()
             if now - self.shoot_timer > 500:  # Delay between shots
                 self.shoot_timer = now
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0))
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2))
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0, 2))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2, 1))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2, 1))
                 self.shots_fired += 1
                 if self.shots_fired >= self.fire_rounds:
                     self.shoot_ready = False
@@ -59,13 +59,14 @@ class Plant(pygame.sprite.Sprite):
 
 # Bullet class
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, vx, vy):
+    def __init__(self, x, y, vx, vy, damage):
         super().__init__()
         self.image = pygame.Surface((10, 10))
         self.image.fill(WHITE)
         self.rect = self.image.get_rect(center=(x, y))
         self.vx = vx
         self.vy = vy
+        self.damage = damage  # Damage value of the bullet
 
     def update(self):
         self.rect.x += self.vx
@@ -145,7 +146,7 @@ while running:
     for bullet in bullets:
         hit_zombies = pygame.sprite.spritecollide(bullet, zombies, False)
         for zombie in hit_zombies:
-            zombie.health -= 1
+            zombie.health -= bullet.damage  # Apply bullet damage
             bullet.kill()
             if zombie.health <= 0:
                 zombie.kill()
