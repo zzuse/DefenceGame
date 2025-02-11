@@ -18,9 +18,14 @@ GREEN = (0, 200, 0)
 RED = (200, 0, 0)
 FONT = pygame.font.Font(None, 24)
 
-# Dropdown options for zombies
-ZOMBIE_TYPES = ["Normal Zombie", "Fast Zombie", "Tank Zombie", "None"]
-selected_zombie = "None"
+# Zombie selection buttons
+ZOMBIE_TYPES = ["Normal", "Fast", "Tank", "None"]
+selected_zombie = None
+selecting_zombie = True  # Track if the player is selecting a zombie type
+buttons = {"Normal": pygame.Rect(50, 30, 100, 30),
+           "Fast": pygame.Rect(160, 30, 100, 30),
+           "Tank": pygame.Rect(270, 30, 100, 30),
+           "None": pygame.Rect(380, 30, 100, 30)}
 
 
 # Plant class
@@ -30,14 +35,14 @@ class Plant(pygame.sprite.Sprite):
         self.image = pygame.Surface((GRID_SIZE, GRID_SIZE))
         self.image.fill(GREEN)
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.shoot_ready = False  # Shoots only after zombie placement
-        self.health = 10  # Each plant has 10 health
-        self.fire_rounds = 3  # Number of fire rounds per turn
+        self.shoot_ready = False
+        self.health = 10
+        self.fire_rounds = 3
         self.shoot_timer = 0
         self.shots_fired = 0
 
-    def move(self, x, y):
-        self.rect.topleft = (x, y)
+    def move(self, y):
+        self.rect.topleft = (0, y)
 
     def start_shooting(self):
         if self.shoot_ready:
@@ -47,11 +52,11 @@ class Plant(pygame.sprite.Sprite):
     def shoot(self):
         if self.shoot_ready and self.shots_fired < self.fire_rounds:
             now = pygame.time.get_ticks()
-            if now - self.shoot_timer > 500:  # Delay between shots
+            if now - self.shoot_timer > 500:
                 self.shoot_timer = now
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0, 2, 200))
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2, 1, 200))
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2, 1, 200))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0, 2, 500))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2, 1, 500))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2, 1, 500))
                 self.shots_fired += 1
                 if self.shots_fired >= self.fire_rounds:
                     self.shoot_ready = False
@@ -91,11 +96,18 @@ class Zombie(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.health = health  # Each zombie has specified health
 
-    def move_forward(self):
-        self.rect.x -= GRID_SIZE  # Moves one step forward per round
-        if self.rect.x < 0:
-            pygame.quit()
-            quit()
+    def move(self):
+        if self.rect.x > GRID_SIZE:
+            self.rect.x -= GRID_SIZE  # Moves one step forward per round
+        else:
+            if self.rect.y < plant.rect.y:
+                self.rect.y += GRID_SIZE
+            elif self.rect.y > plant.rect.y:
+                self.rect.y -= GRID_SIZE
+
+    def attack(self):
+        if self.rect.colliderect(plant.rect):
+            plant.health -= 1
 
     def draw_health(self, surface):
         health_text = FONT.render(str(self.health), True, WHITE)
@@ -105,54 +117,53 @@ class Zombie(pygame.sprite.Sprite):
 # Groups
 bullets = pygame.sprite.Group()
 zombies = pygame.sprite.Group()
-plant = Plant(GRID_SIZE, GRID_SIZE)  # One plant instance
-
+plant = Plant(0, GRID_SIZE)  # One plant instance
 # Game loop
 running = True
 clock = pygame.time.Clock()
-player_turn = "plant"  # Alternates between "plant" and "zombie"
+player_turn = "plant"
+plant = Plant(0, GRID_SIZE)
+zombies = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 
 while running:
     screen.fill((0, 0, 0))
-
-    # Display current player's turn at the top
+    pygame.draw.rect(screen, WHITE, (0, 50, WIDTH, HEIGHT - 50), 2)
     turn_text = FONT.render(f"Next Turn: {player_turn.capitalize()}", True, WHITE)
     screen.blit(turn_text, (WIDTH // 2 - 50, 10))
+
+    for key, rect in buttons.items():
+        pygame.draw.rect(screen, WHITE, rect, 2)
+        screen.blit(FONT.render(key, True, WHITE), (rect.x + 10, rect.y + 5))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_1:
-                selected_zombie = "Normal Zombie"
-            elif event.key == pygame.K_2:
-                selected_zombie = "Fast Zombie"
-            elif event.key == pygame.K_3:
-                selected_zombie = "Tank Zombie"
-            elif event.key == pygame.K_0:
-                selected_zombie = "None"
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mx, my = pygame.mouse.get_pos()
-            grid_x = (mx // GRID_SIZE) * GRID_SIZE
-            grid_y = (my // GRID_SIZE) * GRID_SIZE
-
-            if player_turn == "plant":
-                plant.move(grid_x, grid_y)  # Move the plant
-                player_turn = "zombie"
-            elif player_turn == "zombie" and selected_zombie != "None":
-                health = 10 if selected_zombie == "Normal Zombie" else 5 if selected_zombie == "Fast Zombie" else 20
-                zombies.add(Zombie(grid_x, grid_y, health))
+            if player_turn == "zombie" and selecting_zombie:
+                for key, rect in buttons.items():
+                    if rect.collidepoint(mx, my):
+                        selected_zombie = key
+                        selecting_zombie = False
+                        break
+            elif player_turn == "zombie" and not selecting_zombie:
+                grid_y = (my // GRID_SIZE) * GRID_SIZE
+                if selected_zombie != "None":
+                    health = 10 if selected_zombie == "Normal" else 5 if selected_zombie == "Fast" else 20
+                    zombies.add(Zombie((COLS - 1) * GRID_SIZE, grid_y, health))
+                for zombie in zombies:
+                    zombie.move()
+                    zombie.attack()
+                selecting_zombie = True
                 player_turn = "plant"
-
-                # Allow plant to shoot after zombie placement
                 plant.shoot_ready = True
                 plant.start_shooting()
+            elif player_turn == "plant":
+                plant.move((my // GRID_SIZE) * GRID_SIZE)
+                player_turn = "zombie"
+                selecting_zombie = True
 
-                # Move zombies forward one step
-                for zombie in zombies:
-                    zombie.move_forward()
-
-    # Let plant shoot with delays
     plant.shoot()
 
     # Update
@@ -163,7 +174,7 @@ while running:
     for bullet in bullets:
         hit_zombies = pygame.sprite.spritecollide(bullet, zombies, False)
         for zombie in hit_zombies:
-            zombie.health -= bullet.damage  # Apply bullet damage
+            zombie.health -= bullet.damage
             bullet.kill()
             if zombie.health <= 0:
                 zombie.kill()
