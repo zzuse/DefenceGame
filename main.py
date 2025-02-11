@@ -96,6 +96,10 @@ player_turn = "plant"  # Alternates between "plant" and "zombie"
 while running:
     screen.fill((0, 0, 0))
 
+    # Display current player's turn at the top
+    turn_text = FONT.render(f"Next Turn: {player_turn.capitalize()}", True, WHITE)
+    screen.blit(turn_text, (WIDTH // 2 - 50, 10))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
