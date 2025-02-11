@@ -18,6 +18,10 @@ GREEN = (0, 200, 0)
 RED = (200, 0, 0)
 FONT = pygame.font.Font(None, 24)
 
+# Dropdown options for zombies
+ZOMBIE_TYPES = ["Normal Zombie", "Fast Zombie", "Tank Zombie", "None"]
+selected_zombie = "None"
+
 
 # Plant class
 class Plant(pygame.sprite.Sprite):
@@ -80,12 +84,12 @@ class Bullet(pygame.sprite.Sprite):
 
 # Zombie class
 class Zombie(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, health):
         super().__init__()
         self.image = pygame.Surface((GRID_SIZE, GRID_SIZE))
         self.image.fill(RED)
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.health = 10  # Each zombie has 10 health
+        self.health = health  # Each zombie has specified health
 
     def move_forward(self):
         self.rect.x -= GRID_SIZE  # Moves one step forward per round
@@ -118,6 +122,15 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_1:
+                selected_zombie = "Normal Zombie"
+            elif event.key == pygame.K_2:
+                selected_zombie = "Fast Zombie"
+            elif event.key == pygame.K_3:
+                selected_zombie = "Tank Zombie"
+            elif event.key == pygame.K_0:
+                selected_zombie = "None"
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mx, my = pygame.mouse.get_pos()
             grid_x = (mx // GRID_SIZE) * GRID_SIZE
@@ -126,8 +139,9 @@ while running:
             if player_turn == "plant":
                 plant.move(grid_x, grid_y)  # Move the plant
                 player_turn = "zombie"
-            elif player_turn == "zombie":
-                zombies.add(Zombie(grid_x, grid_y))
+            elif player_turn == "zombie" and selected_zombie != "None":
+                health = 10 if selected_zombie == "Normal Zombie" else 5 if selected_zombie == "Fast Zombie" else 20
+                zombies.add(Zombie(grid_x, grid_y, health))
                 player_turn = "plant"
 
                 # Allow plant to shoot after zombie placement
