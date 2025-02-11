@@ -45,9 +45,9 @@ class Plant(pygame.sprite.Sprite):
             now = pygame.time.get_ticks()
             if now - self.shoot_timer > 500:  # Delay between shots
                 self.shoot_timer = now
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0, 2))
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2, 1))
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2, 1))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0, 2, 200))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2, 1, 200))
+                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2, 1, 200))
                 self.shots_fired += 1
                 if self.shots_fired >= self.fire_rounds:
                     self.shoot_ready = False
@@ -59,7 +59,7 @@ class Plant(pygame.sprite.Sprite):
 
 # Bullet class
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, vx, vy, damage):
+    def __init__(self, x, y, vx, vy, damage, range_):
         super().__init__()
         self.image = pygame.Surface((10, 10))
         self.image.fill(WHITE)
@@ -67,11 +67,14 @@ class Bullet(pygame.sprite.Sprite):
         self.vx = vx
         self.vy = vy
         self.damage = damage  # Damage value of the bullet
+        self.range = range_  # Maximum distance the bullet can travel
+        self.start_x = x
 
     def update(self):
         self.rect.x += self.vx
         self.rect.y += self.vy
-        if self.rect.x > WIDTH or self.rect.y < 0 or self.rect.y > HEIGHT:
+        if self.rect.x > WIDTH or self.rect.y < 0 or self.rect.y > HEIGHT or abs(
+                self.rect.x - self.start_x) > self.range:
             self.kill()
 
 
