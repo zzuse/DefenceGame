@@ -5,7 +5,7 @@ import random
 pygame.init()
 
 # Screen settings
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1200, 600
 GRID_SIZE = 80
 ROWS = 5
 COLS = 10
@@ -19,13 +19,27 @@ RED = (200, 0, 0)
 FONT = pygame.font.Font(None, 24)
 
 # Zombie selection buttons
+# UI Panels
+PLANT_STORE_WIDTH = 200
+ZOMBIE_PANEL_WIDTH = 200
+
+# Plant store items
+PLANT_STORE_RECT = pygame.Rect(0, 0, PLANT_STORE_WIDTH, HEIGHT)
+PLANT_MONEY = 100
+plant_buttons = {"Pistol": pygame.Rect(10, 100, 180, 30),
+                 "Assault Rifle": pygame.Rect(10, 140, 180, 30),
+                 "Shotgun": pygame.Rect(10, 180, 180, 30)}
+
+# Zombie selection panel
+ZOMBIE_PANEL_RECT = pygame.Rect(WIDTH - ZOMBIE_PANEL_WIDTH, 0, ZOMBIE_PANEL_WIDTH, HEIGHT)
+# Zombie selection buttons
 ZOMBIE_TYPES = ["Normal", "Fast", "Tank", "None"]
 selected_zombie = None
 selecting_zombie = True  # Track if the player is selecting a zombie type
-buttons = {"Normal": pygame.Rect(50, 30, 100, 30),
-           "Fast": pygame.Rect(160, 30, 100, 30),
-           "Tank": pygame.Rect(270, 30, 100, 30),
-           "None": pygame.Rect(380, 30, 100, 30)}
+buttons = {"Normal": pygame.Rect(WIDTH - 190, 100, 180, 30),
+           "Fast": pygame.Rect(WIDTH - 190, 140, 180, 30),
+           "Tank": pygame.Rect(WIDTH - 190, 180, 180, 30),
+           "None": pygame.Rect(WIDTH - 190, 220, 180, 30)}
 
 
 # Plant class
@@ -42,7 +56,7 @@ class Plant(pygame.sprite.Sprite):
         self.shots_fired = 0
 
     def move(self, y):
-        self.rect.topleft = (0, y)
+        self.rect.topleft = (PLANT_STORE_WIDTH, y)
 
     def start_shooting(self):
         if self.shoot_ready:
@@ -114,24 +128,31 @@ class Zombie(pygame.sprite.Sprite):
         surface.blit(health_text, (self.rect.right - 20, self.rect.top))
 
 
-# Groups
-bullets = pygame.sprite.Group()
-zombies = pygame.sprite.Group()
-plant = Plant(0, GRID_SIZE)  # One plant instance
 # Game loop
 running = True
 clock = pygame.time.Clock()
 player_turn = "plant"
-plant = Plant(0, GRID_SIZE)
+plant = Plant(PLANT_STORE_WIDTH, GRID_SIZE)
 zombies = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
 
 while running:
     screen.fill((0, 0, 0))
-    pygame.draw.rect(screen, WHITE, (0, 50, WIDTH, HEIGHT - 50), 2)
+    # pygame.draw.rect(screen, WHITE, (0, 50, WIDTH, HEIGHT - 50), 2)
+    pygame.draw.rect(screen, WHITE, PLANT_STORE_RECT, 2)
+    pygame.draw.rect(screen, WHITE, ZOMBIE_PANEL_RECT, 2)
     turn_text = FONT.render(f"Next Turn: {player_turn.capitalize()}", True, WHITE)
     screen.blit(turn_text, (WIDTH // 2 - 50, 10))
 
+    # Draw plant store
+    screen.blit(FONT.render(f"Plant Store", True, WHITE), (10, 10))
+    screen.blit(FONT.render(f"Money: {PLANT_MONEY}", True, WHITE), (10, 50))
+    for key, rect in plant_buttons.items():
+        pygame.draw.rect(screen, WHITE, rect, 2)
+        screen.blit(FONT.render(key, True, WHITE), (rect.x + 10, rect.y + 5))
+
+    # Draw zombie selection panel
+    screen.blit(FONT.render(f"Select Zombie", True, WHITE), (WIDTH - 190, 50))
     for key, rect in buttons.items():
         pygame.draw.rect(screen, WHITE, rect, 2)
         screen.blit(FONT.render(key, True, WHITE), (rect.x + 10, rect.y + 5))
@@ -151,7 +172,7 @@ while running:
                 grid_y = (my // GRID_SIZE) * GRID_SIZE
                 if selected_zombie != "None":
                     health = 10 if selected_zombie == "Normal" else 5 if selected_zombie == "Fast" else 20
-                    zombies.add(Zombie((COLS - 1) * GRID_SIZE, grid_y, health))
+                    zombies.add(Zombie((COLS - 1) * GRID_SIZE + PLANT_STORE_WIDTH, grid_y, health))
                 for zombie in zombies:
                     zombie.move()
                     zombie.attack()
