@@ -28,7 +28,10 @@ PLANT_STORE_RECT = pygame.Rect(0, 0, PLANT_STORE_WIDTH, HEIGHT)
 PLANT_MONEY = 100
 plant_buttons = {"Pistol": pygame.Rect(10, 100, 180, 30),
                  "Assault Rifle": pygame.Rect(10, 140, 180, 30),
-                 "Shotgun": pygame.Rect(10, 180, 180, 30)}
+                 "Shotgun": pygame.Rect(10, 180, 180, 30),
+                 "None": pygame.Rect(10, 220, 180, 30)}
+selected_weapon = "Pistol"
+selecting_weapon = True
 
 # Zombie selection panel
 ZOMBIE_PANEL_RECT = pygame.Rect(WIDTH - ZOMBIE_PANEL_WIDTH, 0, ZOMBIE_PANEL_WIDTH, HEIGHT)
@@ -41,6 +44,13 @@ buttons = {"Normal": pygame.Rect(WIDTH - 190, 100, 180, 30),
            "Tank": pygame.Rect(WIDTH - 190, 180, 180, 30),
            "None": pygame.Rect(WIDTH - 190, 220, 180, 30)}
 
+# Weapon properties
+weapon_stats = {
+    "Pistol": {"range": 400, "rounds": 3, "angles": [0], "damage": 1},
+    "Assault Rifle": {"range": 600, "rounds": 5, "angles": [-5, 0, 5], "damage": 10},
+    "Shotgun": {"range": 300, "rounds": 5, "angles": [-10, -5, 0, 5, 10], "damage": 5},
+}
+
 
 # Plant class
 class Plant(pygame.sprite.Sprite):
@@ -51,7 +61,7 @@ class Plant(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.shoot_ready = False
         self.health = 10
-        self.fire_rounds = 3
+        # self.fire_rounds = 3
         self.shoot_timer = 0
         self.shots_fired = 0
 
@@ -64,15 +74,18 @@ class Plant(pygame.sprite.Sprite):
             self.shots_fired = 0
 
     def shoot(self):
-        if self.shoot_ready and self.shots_fired < self.fire_rounds:
+        if self.shoot_ready and self.shots_fired < weapon_stats[selected_weapon]["rounds"]:
             now = pygame.time.get_ticks()
             if now - self.shoot_timer > 500:
                 self.shoot_timer = now
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0, 2, 500))
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2, 1, 500))
-                bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2, 1, 500))
+                # bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0, 2, 500))
+                # bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2, 1, 500))
+                # bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2, 1, 500))
+                for angle in weapon_stats[selected_weapon]["angles"]:
+                    bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, angle,
+                                       weapon_stats[selected_weapon]["damage"], weapon_stats[selected_weapon]["range"]))
                 self.shots_fired += 1
-                if self.shots_fired >= self.fire_rounds:
+                if self.shots_fired >= weapon_stats[selected_weapon]["rounds"]:
                     self.shoot_ready = False
 
     def draw_health(self, surface):
@@ -172,7 +185,18 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mx, my = pygame.mouse.get_pos()
-            if player_turn == "zombie" and selecting_zombie:
+            if player_turn == "plant" and selecting_weapon:
+                for key, rect in plant_buttons.items():
+                    if rect.collidepoint(mx, my):
+                        selected_weapon = key if key != "None" else selected_weapon
+                        selecting_weapon = False
+                        break
+            elif player_turn == "plant" and not selecting_weapon:
+                plant.move((my // GRID_SIZE) * GRID_SIZE)
+                player_turn = "zombie"
+                selecting_zombie = True
+                selecting_weapon = True
+            elif player_turn == "zombie" and selecting_zombie:
                 for key, rect in buttons.items():
                     if rect.collidepoint(mx, my):
                         selected_zombie = key
@@ -190,10 +214,6 @@ while running:
                 player_turn = "plant"
                 plant.shoot_ready = True
                 plant.start_shooting()
-            elif player_turn == "plant":
-                plant.move((my // GRID_SIZE) * GRID_SIZE)
-                player_turn = "zombie"
-                selecting_zombie = True
 
     plant.shoot()
 
