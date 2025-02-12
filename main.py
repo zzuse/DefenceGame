@@ -87,6 +87,8 @@ class Plant(pygame.sprite.Sprite):
                 self.shots_fired += 1
                 if self.shots_fired >= weapon_stats[selected_weapon]["rounds"]:
                     self.shoot_ready = False
+        if self.shoot_ready and selected_weapon == "None":
+            self.shoot_ready = False
 
     def draw_health(self, surface):
         health_text = FONT.render(str(self.health), True, WHITE)
@@ -192,10 +194,10 @@ while running:
             if player_turn == "plant" and selecting_weapon:
                 for key, rect in plant_buttons.items():
                     if rect.collidepoint(mx, my):
-                        if key != "None" and not owned_weapons[key] and PLANT_MONEY >= weapon_prices[key]:
+                        if not owned_weapons[key] and PLANT_MONEY >= weapon_prices[key]:
                             PLANT_MONEY -= weapon_prices[key]
                             owned_weapons[key] = True
-                        if key == "None" or owned_weapons[key]:
+                        if owned_weapons[key]:
                             selected_weapon = key
                             selecting_weapon = False
                         break
