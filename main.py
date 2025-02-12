@@ -26,12 +26,14 @@ ZOMBIE_PANEL_WIDTH = 200
 # Plant store items
 PLANT_STORE_RECT = pygame.Rect(0, 0, PLANT_STORE_WIDTH, HEIGHT)
 PLANT_MONEY = 100
-plant_buttons = {"Pistol": pygame.Rect(10, 100, 180, 30),
-                 "Assault Rifle": pygame.Rect(10, 140, 180, 30),
-                 "Shotgun": pygame.Rect(10, 180, 180, 30),
-                 "None": pygame.Rect(10, 220, 180, 30)}
+plant_buttons = {"Pistol": pygame.Rect(10, 100, 180, 60),
+                 "Assault Rifle": pygame.Rect(10, 170, 180, 60),
+                 "Shotgun": pygame.Rect(10, 240, 180, 60),
+                 "None": pygame.Rect(10, 310, 180, 60)}
 selected_weapon = "Pistol"
 selecting_weapon = True
+owned_weapons = {"Pistol": True, "Assault Rifle": False, "Shotgun": False, "None": True}
+weapon_prices = {"Pistol": 100, "Assault Rifle": 200, "Shotgun": 300, "None": 0}
 
 # Zombie selection panel
 ZOMBIE_PANEL_RECT = pygame.Rect(WIDTH - ZOMBIE_PANEL_WIDTH, 0, ZOMBIE_PANEL_WIDTH, HEIGHT)
@@ -49,6 +51,7 @@ weapon_stats = {
     "Pistol": {"range": 400, "rounds": 3, "angles": [0], "damage": 1},
     "Assault Rifle": {"range": 600, "rounds": 5, "angles": [-5, 0, 5], "damage": 10},
     "Shotgun": {"range": 300, "rounds": 5, "angles": [-10, -5, 0, 5, 10], "damage": 5},
+    "None": {"range": 0, "rounds": 0, "angles": [0], "damage": 0},
 }
 
 
@@ -78,9 +81,6 @@ class Plant(pygame.sprite.Sprite):
             now = pygame.time.get_ticks()
             if now - self.shoot_timer > 500:
                 self.shoot_timer = now
-                # bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, 0, 2, 500))
-                # bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, -2, 1, 500))
-                # bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 4, 2, 1, 500))
                 for angle in weapon_stats[selected_weapon]["angles"]:
                     bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, angle,
                                        weapon_stats[selected_weapon]["damage"], weapon_stats[selected_weapon]["range"]))
@@ -134,8 +134,10 @@ class Zombie(pygame.sprite.Sprite):
             self.kill()
 
     def move(self):
-        if self.rect.x > GRID_SIZE:
+        if self.rect.x > plant.rect.x + GRID_SIZE:
             self.rect.x -= GRID_SIZE  # Moves one step forward per round
+        elif self.rect.x == plant.rect.x + GRID_SIZE:
+            self.rect.x -= GRID_SIZE // 5
         else:
             if self.rect.y < plant.rect.y:
                 self.rect.y += GRID_SIZE
@@ -173,6 +175,8 @@ while running:
     for key, rect in plant_buttons.items():
         pygame.draw.rect(screen, WHITE, rect, 2)
         screen.blit(FONT.render(key, True, WHITE), (rect.x + 10, rect.y + 5))
+        screen.blit(FONT.render(f"${weapon_prices.get(key, 0)}", True, WHITE), (rect.x + 130, rect.y + 5))
+        screen.blit(FONT.render("Owned" if owned_weapons.get(key, False) else "Not Owned", True, WHITE), (rect.x + 90, rect.y + 25))
 
     # Draw zombie selection panel
     screen.blit(FONT.render(f"Select Zombie", True, WHITE), (WIDTH - 190, 50))
@@ -188,8 +192,12 @@ while running:
             if player_turn == "plant" and selecting_weapon:
                 for key, rect in plant_buttons.items():
                     if rect.collidepoint(mx, my):
-                        selected_weapon = key if key != "None" else selected_weapon
-                        selecting_weapon = False
+                        if key != "None" and not owned_weapons[key] and PLANT_MONEY >= weapon_prices[key]:
+                            PLANT_MONEY -= weapon_prices[key]
+                            owned_weapons[key] = True
+                        if key == "None" or owned_weapons[key]:
+                            selected_weapon = key
+                            selecting_weapon = False
                         break
             elif player_turn == "plant" and not selecting_weapon:
                 plant.move((my // GRID_SIZE) * GRID_SIZE)
@@ -239,6 +247,10 @@ while running:
     plant.draw_health(screen)
     for zombie in zombies:
         zombie.draw_health(screen)
+
+    if plant.health <= 0:
+        plant.kill()
+        break
 
     pygame.display.flip()
     clock.tick(60)
