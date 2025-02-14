@@ -3,7 +3,12 @@ import random
 
 # Initialize Pygame
 pygame.init()
+pygame.mixer.init()
 
+# Load Sounds
+bullet_sound = pygame.mixer.Sound("bullet.wav")
+plant_place_sound = pygame.mixer.Sound("plant_place.wav")
+zombie_place_sound = pygame.mixer.Sound("zombie_place.wav")
 # Screen settings
 WIDTH, HEIGHT = 1200, 600
 GRID_SIZE = 80
@@ -70,6 +75,7 @@ class Plant(pygame.sprite.Sprite):
 
     def move(self, y):
         self.rect.topleft = (PLANT_STORE_WIDTH, y)
+        plant_place_sound.play()
 
     def start_shooting(self):
         if self.shoot_ready:
@@ -84,6 +90,7 @@ class Plant(pygame.sprite.Sprite):
                 for angle in weapon_stats[selected_weapon]["angles"]:
                     bullets.add(Bullet(self.rect.right, self.rect.y + GRID_SIZE // 2, 5, angle,
                                        weapon_stats[selected_weapon]["damage"], weapon_stats[selected_weapon]["range"]))
+                bullet_sound.play()
                 self.shots_fired += 1
                 if self.shots_fired >= weapon_stats[selected_weapon]["rounds"]:
                     self.shoot_ready = False
@@ -126,6 +133,7 @@ class Zombie(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.health = health
         self.zombie_type = zombie_type
+        zombie_place_sound.play()
 
     def take_damage(self, damage):
         global PLANT_MONEY
